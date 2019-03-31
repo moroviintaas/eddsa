@@ -7,9 +7,13 @@ LIBS   += -lgmp -lgmpxx -lcrypto
 SOURCES += \
         main.cpp \
     ed_point.cpp \
-    conversions.cpp
+    conversions.cpp \
+    crypto_ops.cpp \
+    math_ops.cpp
 
 HEADERS += \
     ed25519_params.h \
     ed_point.h \
-    conversions.h
+    conversions.h \
+    crypto_ops.h \
+    math_ops.h

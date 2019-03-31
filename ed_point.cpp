@@ -151,13 +151,7 @@ Ed_point Ed_point::operator*(const cint &m) const
     return result;
 }
 
-cint Ed_point::mod(const cint &a, const cint &n)
-{
-    cint result;
-    mpz_mod(result.get_mpz_t(), a.get_mpz_t(), n.get_mpz_t() );
-    //std::cout<<a<<"\n"<<n<<"\n"<<result<<"\n\n";
-    return result;
-}
+
 
 
 

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "ed25519_params.h"
 #include <iostream>
+#include "math_ops.h"
 #ifndef CINT
 #define CINT
 typedef mpz_class cint;
@@ -41,7 +42,7 @@ public:
     Ed_point operator+(const Ed_point &pnt) const;
     Ed_point operator*(const cint &m) const;
 
-    static cint mod(const cint &a, const cint &n);
+    //static
 
 };
 
