@@ -12,9 +12,17 @@ void test1()
     std::cout<<"===================================\nTest 1:\n";
     cint n = cint("0x607fae1c03ac3b701969327b69c54944c42cec92f44a84ba605afdef9db1619d");
     Ed_point g(PX,PY);
+    ar512 signature;
+    std::vector<uint8_t> msg = {};
     ar256 sk = int_to_ar<ar256>(n);
     //std::cout<<"a\n";
     ar256 pk = calculate_pk_ed25519(sk,g);
+
+    signature = sign_ed15519(sk,msg);
+    std::cout<<"signature:\t"<<signature<<"\n";
+    std::cout<<"pk:\t"<<pk<<"\n";
+
+    std::cout<<verify_ed12519(pk,msg,signature)<<"\n";
 
 }
 
@@ -25,14 +33,17 @@ void test2()
     Ed_point g(PX,PY);
     ar256 csd;
 
+
     Ed_point tp, tp2;
 
     tp = g*n;
     std::cout<<tp.get_x()<<"\n"<<tp.get_y()<<"\n";
     csd = compress_point_ed25519(tp);
     bool success;
-    tp2 = decompress_point_ed25519(csd,ed25519_params,success);
+    tp2 = decompress_point_ed25519(csd,success,ed25519_params);
     std::cout<<success<<"\t"<<(tp==tp2)<<"\n"<<tp2.get_x()<<"\n"<<tp2.get_y()<<"\n";
+
+
 }
 
 int main()
@@ -92,14 +103,16 @@ int main()
         secret[i] = uint8_t(s[i]);
     }
     std::cout<<secret<<"\n";
-    hsh = expand_secret_ed25519(secret,success_flag);
+    hsh = expand_secret_ed25519(secret);
     std::cout<<hsh<<"\n";
 
     pk = calculate_pk_ed25519(secret, g);
 
     test1();
-    std::cout<<std::hex<<(cint(1)<<255)<<"\n";
-    test2();
+    //std::cout<<std::hex<<(cint(1)<<255)<<"\n";
+    //test2();
+    //std::string tt = "a\0n";
+
 
 
 

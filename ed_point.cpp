@@ -30,9 +30,17 @@ Ed_point::Ed_point(const Ed_point &pnt)
 bool Ed_point::operator==(const Ed_point &pnt) const
 {
 
-    if(this->params->d == pnt.params->d && this->params->modulus == pnt.params->modulus && this->get_x() == pnt.get_x() && this->get_y() == pnt.get_y())
+    /*if(this->params->d == pnt.params->d && this->params->modulus == pnt.params->modulus && this->get_x() == pnt.get_x() && this->get_y() == pnt.get_y())
         return true;
     else return false;
+    */
+    if (this->params->d != pnt.params->d || this->params->modulus != pnt.params->modulus){
+        return false;
+    }
+    else if (mod((X * pnt.Z) - (pnt.X * Z), params->modulus) != 0) return false;
+    else if (mod((Y * pnt.Z) - (pnt.Y * Z), params->modulus) != 0) return false;
+    else return true;
+
 }
 bool Ed_point::equal_params(const Ed_point &pnt) const
 {
@@ -62,6 +70,20 @@ cint Ed_point::get_y() const
     cint iZ;
     mpz_invert(iZ.get_mpz_t(),Z.get_mpz_t(),params->modulus.get_mpz_t());
     return mod((Y*iZ),params->modulus);
+}
+
+cint Ed_point::get_d() const
+{
+    return params->d;
+}
+cint Ed_point::get_p() const
+{
+    return params->modulus;
+}
+
+cint Ed_point::get_ec_order() const
+{
+    return params ->order;
 }
 
 Ed_point &Ed_point::operator+=(const Ed_point &pnt)

@@ -13,8 +13,9 @@ typedef mpz_class cint;
 struct Ec_params{
     cint modulus;
     cint d;
+    cint order;
 };
-const Ec_params ed25519_params ={p, d};
+const Ec_params ed25519_params ={p, d, L};
 
 class Ed_point
 {
@@ -36,6 +37,9 @@ public:
 
     cint get_x() const;
     cint get_y() const;
+    cint get_d() const;
+    cint get_p() const;
+    cint get_ec_order() const;
 
 
     Ed_point &operator+=(const Ed_point &pnt);
@@ -45,5 +49,7 @@ public:
     //static
 
 };
+
+const Ed_point ed25519_generator(PX,PY);
 
 #endif // ED_POINT_H
