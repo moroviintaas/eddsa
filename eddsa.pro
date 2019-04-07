@@ -2,7 +2,7 @@ TEMPLATE = app
 CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
-LIBS   += -lgmp -lgmpxx -lcrypto -lssl -L/usr/local/lib
+LIBS   += -lgmp -lgmpxx -lcrypto -lssl -L/usr/local/lib -lboost_system -lboost_program_options
 SOURCES += \
         main.cpp \
     ed_point.cpp \

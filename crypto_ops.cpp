@@ -120,6 +120,7 @@ Ed_point decompress_point_ed25519(const ar256 &compressed,bool &success,const Ec
     uint8_t x_0 = compressed[31]>>7;
     cint x,y,u,v,x2,t,e;
     //Ed_point result(ed25519_params);
+    Ed_point result;
     const cint &p = params.modulus;
 
     if(x_0 != 0){
@@ -145,22 +146,37 @@ Ed_point decompress_point_ed25519(const ar256 &compressed,bool &success,const Ec
     t = mod(v*x2,p);
     if(t == u)
     {
-        success = 1;
-        return Ed_point(x,y,ed25519_params);
+        success = true;
+        //result =  Ed_point(x,y,ed25519_params);
     }
     else if(t == p-u)
     {
-        success =1;
+        success =true;
         e = (p-1)/4;
         x =mod(x*powm(cint(2),e,p),p);
-        return Ed_point(x,y,ed25519_params);
+        //result =  Ed_point(x,y,ed25519_params);
     }
     else {
         success  =false;
-        std::cerr<<"Error: cannot find x to be square root.\n";
+        std::cerr<<"Błąd nie można znaleźć pierwiastka kwadratowego.\n";
         return Ed_point();
 
     }
+    if (success)
+    {
+        if(x == 0 && x_0 != 0){
+            success = false;
+            return Ed_point();
+        }
+        else if(x_0%2 != x%2){
+            x = p-x;
+
+        }
+         return  Ed_point(x,y,ed25519_params);
+    }
+    std::cerr<<"Błąd przy dekompresji punktu, nieznany - moim zdaniem nie powinien się pojawić.\n";
+    return Ed_point();
+
 
 
 
@@ -275,7 +291,9 @@ ar512 sign_ed15519(const ar256 &sk, const std::vector<uint8_t> &msg, const Ed_po
     r = mod(ar_to_int<ar512>(hash_sha512(buffer)),generator.get_ec_order());
 
     R = generator *r;
+    //std::cout<<"R:\n"<<R<<"\n\n";
     Rs = compress_point_ed25519(R);
+    //std::cout<<"Rs:\t"<<Rs<<"\n";
     dbg = decompress_point_ed25519(Rs,success);
     if(!(dbg == R)){
         std::cerr<<"Failure: decompresing R.\n";
@@ -310,10 +328,10 @@ ar512 sign_ed15519(const ar256 &sk, const std::vector<uint8_t> &msg, const Ed_po
 
     hA = (decompress_point_ed25519(A,success)*h);
     t = hA + R;
-    std::cout<<"hA_x:\t"<<hA.get_x()<<"\n";
-    std::cout<<"sB_x:\t"<<(generator*s).get_x()<<"\n";
-    std::cout<<"R_x:\t"<<R.get_x()<<"\n";
-    std::cout<<"t_x:\t"<<t.get_x()<<"\n";
+    //std::cout<<"hA_x:\t"<<hA.get_x()<<"\n";
+    //std::cout<<"sB_x:\t"<<(generator*s).get_x()<<"\n";
+    //std::cout<<"R_x:\t"<<R.get_x()<<"\n";
+    //std::cout<<"t_x:\t"<<t.get_x()<<"\n";
     return buff512;
 
 
@@ -334,14 +352,14 @@ bool verify_ed12519(const ar256 &pk, const std::vector<uint8_t> &msg, const ar51
     bool success;
 
     A = decompress_point_ed25519(pk,success);
-    std::cout<<success<<"\n";
+    //std::cout<<success<<"\n";
 
     for (size_t i= 0 ; i<Rs.max_size(); i++){
         Rs[i] = signature[i];
     }
    // std::cout<<"Rs v:\t"<<Rs<<"\n";
     R = decompress_point_ed25519(Rs,success);
-    std::cout<<success<<"\n";
+    //std::cout<<success<<"\n";
     for (size_t i= Rs.max_size() ; i<Rs.max_size() + buff256.max_size(); i++){
         buff256[i - Rs.max_size()] = signature[i];
     }
@@ -363,12 +381,15 @@ bool verify_ed12519(const ar256 &pk, const std::vector<uint8_t> &msg, const ar51
 
     sB = generator * s;
     hA = A * h;
-    t = hA + R;
 
-    std::cout<<"hA_x:\t"<<(hA).get_x()<<"\n";
-    std::cout<<"sB_x:\t"<<sB.get_x()<<"\n";
-    std::cout<<"R_x:\t"<<R.get_x()<<"\n";
-    std::cout<<"t_x:\t"<<t.get_x()<<"\n";
+    //std::cout<<"sB:\n"<<sB<<"\n\n";
+    t = hA + R;
+    //std::cout<<"tt:\n"<<t<<"\n\n";
+    //
+    //std::cout<<"hA_x:\t"<<(hA).get_x()<<"\n";
+    //std::cout<<"sB_x:\t"<<sB.get_x()<<"\n";
+    //std::cout<<"R_x:\t"<<R.get_x()<<"\n";
+    //std::cout<<"t_x:\t"<<t.get_x()<<"\n";
 
     /*std::cout<<"hA_y:\t"<<(hA).get_y()<<"\n";
     std::cout<<"sB_y:\t"<<sB.get_y()<<"\n";

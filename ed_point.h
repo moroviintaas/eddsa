@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "ed25519_params.h"
 #include <iostream>
+#include <fstream>
 #include "math_ops.h"
 #ifndef CINT
 #define CINT
@@ -48,8 +49,15 @@ public:
 
     //static
 
+    cint get_X() const;
+    cint get_Y() const;
+    cint get_Z() const;
+    cint get_T() const;
 };
 
+std::ostream & operator<<(std::ostream &out, const Ed_point &pnt);
+
 const Ed_point ed25519_generator(PX,PY);
+
 
 #endif // ED_POINT_H

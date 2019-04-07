@@ -65,12 +65,52 @@ void clr(std::array<uint8_t, sz> &a)
     }
 }
 
+template<size_t sz>
+int drop_ar(const std::array<uint8_t, sz> &a, std::ofstream &ofs){
+    if(ofs.is_open()){
+        for(size_t i=0; i<a.size(); ++i){
+            ofs.put(char(a[i]));
+        }
+        for(size_t i=a.size(); i<a.max_size(); ++i){
+            ofs.put(char(0));
+        }
+        return 0;
+    }
+    else{
+        std::cerr<<"Błąd strumień do pliku nie jest otwarty.\n";
+        return -2;
+    }
+}
+
+template <size_t sz>
+int read_ar(std::array<uint8_t, sz> &a, std::ifstream &ifs){
+    if (ifs.is_open()){
+        char c;
+        for(size_t i=0; i<a.max_size(); ++i){
+            ifs.get(c);
+            if(!ifs.good()){
+                std::cerr<<"Błąd wczytywania tablicy z pliku\n";
+                return -1;
+            }
+            a[i] = uint8_t(c);
+        }
+        return 0;
+
+    }
+    else{
+        std::cerr<<"Błąd strumień z pliku nie jest otwarty\n";
+        return -2;
+    }
+
+}
+
 
 
 
 template ar512 int_to_ar<ar512>(const cint &n);
 template ar256 int_to_ar<ar256>(const cint &n);
 template cint ar_to_int<ar512>(const ar512 &a);
+//template int drop_ar<32>(const ar256 &a, std::ofstream &ofs);
 
 
 #endif // CONVERSIONS_H

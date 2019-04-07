@@ -1,6 +1,27 @@
 #include "ed_point.h"
 
 
+cint Ed_point::get_X() const
+{
+    return X;
+}
+
+
+cint Ed_point::get_Y() const
+{
+    return Y;
+}
+
+cint Ed_point::get_Z() const
+{
+    return Z;
+}
+
+cint Ed_point::get_T() const
+{
+    return T;
+}
+
 Ed_point::Ed_point(const Ec_params &params)
 {
     this->params = &params;
@@ -35,10 +56,11 @@ bool Ed_point::operator==(const Ed_point &pnt) const
     else return false;
     */
     if (this->params->d != pnt.params->d || this->params->modulus != pnt.params->modulus){
+        std::cout<<"not same params\n";
         return false;
     }
-    else if (mod((X * pnt.Z) - (pnt.X * Z), params->modulus) != 0) return false;
-    else if (mod((Y * pnt.Z) - (pnt.Y * Z), params->modulus) != 0) return false;
+    else if (mod((X * pnt.Z) - (pnt.X * Z), params->modulus) != 0) {std::cout<<"x\n"; return false;}
+    else if (mod((Y * pnt.Z) - (pnt.Y * Z), params->modulus) != 0) {std::cout<<"y\n"; return false;}
     else return true;
 
 }
@@ -176,40 +198,14 @@ Ed_point Ed_point::operator*(const cint &m) const
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //Ed_point &operator+=(const Ed_point &pnt)
 
+
+std::ostream &operator<<(std::ostream &out, const Ed_point &pnt)
+{
+    out<<"X:\t"<<pnt.get_X()<<"\n";
+    out<<"Y:\t"<<pnt.get_Y()<<"\n";
+    out<<"Z:\t"<<pnt.get_Z()<<"\n";
+    out<<"T:\t"<<pnt.get_T()<<"\n";
+    return out;
+}
