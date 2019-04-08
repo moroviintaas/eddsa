@@ -344,6 +344,8 @@ ar512 sign_ed15519(const ar256 &sk, const std::vector<uint8_t> &msg, const Ed_po
 
 bool verify_ed12519(const ar256 &pk, const std::vector<uint8_t> &msg, const ar512 &signature, const Ed_point &generator)
 {
+
+
     Ed_point A, R, sB, hA, t;
     ar256 buff256, Rs;
     //ar512 buff512;
@@ -395,6 +397,7 @@ bool verify_ed12519(const ar256 &pk, const std::vector<uint8_t> &msg, const ar51
     std::cout<<"sB_y:\t"<<sB.get_y()<<"\n";
     std::cout<<"R_y:\t"<<R.get_y()<<"\n";
     std::cout<<"t_y:\t"<<t.get_y()<<"\n";*/
+
 
     return (sB == t);
 

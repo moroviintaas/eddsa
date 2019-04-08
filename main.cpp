@@ -99,6 +99,10 @@ int vectorize_binary_file(const std::string &filename, std::vector<uint8_t> &res
     result.clear();
     char c;
     ifs.open(filename, std::ios_base::in | std::ios_base::binary);
+    if(!ifs.is_open()){
+        std::cerr<<"Błąd, nie udało się otworzyć pliku: "<<filename<<"\n";
+        return -1;
+    }
     while( ifs.good()){
         ifs.get(c);
         result.push_back(uint8_t(c));
@@ -109,12 +113,14 @@ int vectorize_binary_file(const std::string &filename, std::vector<uint8_t> &res
     ifs.close();
     return 0;
 }
-void string_to_vec(std::vector<uint8_t> vec, const std::string &s){
+void string_to_vec(std::vector<uint8_t> &vec, const std::string &s){
     vec.clear();
+
     vec = std::vector<uint8_t>(s.size());
     for (size_t i =0; i<s.size();++i) {
         vec[i] = uint8_t(s[i]);
     }
+
 }
 
 
@@ -200,9 +206,10 @@ int main(int argc, const char *argv[])
                 }
                 if(!quiet) std::cout<<std::hex<<key<<"\n";
                 if(vm.count("key_file")){
-                    ofs.open(key_filename);
-                    ofs.setf(std::ios_base::hex);
-                    ofs<<"0x"<<std::hex<<key<<"\n";
+                    ofs.open(key_filename, std::ios_base::out | std::ios_base::binary);
+                    //ofs.setf(std::ios_base::hex);
+                    //ofs<<"0x"<<std::hex<<key<<"\n";
+                    drop_ar(int_to_ar<ar256>(key), ofs);
                     ofs.close();
 
                 }
@@ -213,6 +220,8 @@ int main(int argc, const char *argv[])
         }
         else if(mode == "public"){
             cint pub_key, key;
+            ar256 pub_key_a;
+            ar256 key_a;
             std::string buffer;
             if(vm.count("quiet") && !vm.count("pk_file"))
             {
@@ -221,20 +230,26 @@ int main(int argc, const char *argv[])
             }
 
             if(vm.count("key")){
-                pub_key = cint(pk);
+                key = cint(pk);
+                key_a = int_to_ar<ar256>(key);
+                //pub_key_a = int_to_ar<ar256>(pub_key);
             }
             else{
                 if(vm.count("key_file")){
                     ifs.open(key_filename);
-                    if (ifs.good()){
+                    /*if (ifs.good()){
                         ifs>>buffer;
                         key = cint(buffer);
-                        ifs.close();
+                        */
+                    if(read_ar(key_a,ifs) == 0){
+                        //DEBUG
+                        //std::cout<<std::hex<<ar_to_int(key_a)<<"\n";
                     }
                     else{
                         std::cerr<<"Błąd otwarcia key_file\n";
                         return 0;
                     }
+                    ifs.close();
 
                 }
                 else{
@@ -242,12 +257,14 @@ int main(int argc, const char *argv[])
                     return 0;
                 }
             }
-            pub_key = ar_to_int<ar256>(calculate_pk_ed25519(int_to_ar<ar256>(key), generator ));
+            pub_key_a = (calculate_pk_ed25519(key_a, generator ));
+            pub_key = ar_to_int<ar256>(pub_key_a);
             if(!quiet) std::cout<<std::hex<<pub_key<<"\n";
             if(vm.count("pk_file")){
                 ofs.open(pk_filename);
-                ofs.setf(std::ios_base::hex);
-                ofs<<"0x"<<std::hex<<pub_key<<"\n";
+                //ofs.setf(std::ios_base::hex);
+                //ofs<<"0x"<<std::hex<<pub_key<<"\n";
+                drop_ar(int_to_ar<ar256>(pub_key), ofs);
                 ofs.close();
 
             }
@@ -261,40 +278,47 @@ int main(int argc, const char *argv[])
                 return 0;
             }
             std::string buffer;
-            cint c_sk, c_msg;
+            cint sk_c, c_msg;
+            ar256 sk_a;
             std::vector<uint8_t> msg_v;
-            bool success;
+            //bool success;
             bool message_present = false;
             bool key_present = false;
+            int cflag;
 
             if(vm.count("key")){
-                c_sk = cint(key);
+                sk_c = cint(key);
+                sk_a = int_to_ar<ar256>(sk_c);
                 key_present  =true;
             }
-            else{
-                if(vm.count("key_file"))
+            else if(vm.count("key_file"))
+
                 {
-                    c_sk = import_cint_from_file(key_filename, success);
-                    if(!success){
+                    //c_sk = import_cint_from_file(key_filename, success);
+                    ifs.open(key_filename, std::ios_base::in | std::ios_base::binary);
+                    cflag = read_ar(sk_a,ifs);
+                    if(cflag !=0){
                         std::cerr<<"Nie udało się oddtworzyć klucza prywatnego z pliku\n";
                         return 0;
                     }
                     else{
                         key_present = true;
                     }
+                    ifs.close();
 
 
                 }
-                else{
-                    std::cerr<<"Błąd, potrzebny klucz prywatny!\n";
-                    return 0;
-                }
-
+            else{
+                std::cerr<<"Błąd, potrzebny klucz prywatny!\n";
+                return 0;
             }
 
-            //TODO message parse
+            //std::cout<<"After Load Key:\n"<<sk_a<<"\n";
+
+
 
             if(vm.count("msg")){
+
                 string_to_vec(msg_v, msg);
                 message_present = true;
             }
@@ -309,11 +333,17 @@ int main(int argc, const char *argv[])
                 std::cerr<<"Błąd, potrzebna wiadomość!\n";
                 return 0;
             }
+            //std::cout<<"After msg load"<<"\n";
 
             if(message_present && key_present){
                 ar512 signature;
-                signature = sign_ed15519(int_to_ar<ar256>(c_sk),msg_v);
-                if(!quiet) std::cout<<std::hex<<ar_to_int<ar512>(signature)<<"\n";
+                //std::cout<<msg_v.size()<<"\n";
+                //for (size_t i=0; i<msg_v.size();++i) std::cout<<std::setw(2)<<std::setfill('0')<<uint32_t(msg_v[i]);
+                //std::cout<<"\n";
+                signature = sign_ed15519(sk_a,msg_v);
+                //std::cout<<"after signing\n";
+                //if(!quiet) std::cout<<std::hex<<ar_to_int<ar512>(signature)<<"\n";
+                if(!quiet) std::cout<<(signature)<<"\n";
                 if(vm.count("signature_file")){
                     ofs.open(signature_filename, std::ios_base::out | std::ios_base::binary);
                     drop_ar(signature, ofs);
@@ -327,84 +357,129 @@ int main(int argc, const char *argv[])
 
         }
         else if(mode == "ver"){
+            cint pk_c, signature_c;
+            ar256 pk_a;
+            ar512 signature_a;
+            std::vector<uint8_t> msg_v;
+            bool pkey_present = false;
+            bool message_present = false;
+            bool signature_present = false;
+            int cflag;
             if(vm.count("quiet"))
             {
                 std::cout<<"Weryfikacja na ekran!\n";
                 return 0;
             }
-            //TODO
+            if(vm.count("pk")){
+                pk_c = cint(pk);
+                pk_a = int_to_ar<ar256>(pk_c);
+                pkey_present  =true;
+            }
+            else if(vm.count("pk_file"))
+
+                {
+                    //c_sk = import_cint_from_file(key_filename, success);
+                    ifs.open(pk_filename, std::ios_base::in | std::ios_base::binary);
+                    cflag = read_ar(pk_a,ifs);
+                    //std::cout<<pk_a<<"\n";
+                    if(cflag !=0){
+                        std::cerr<<"Nie udało się oddtworzyć klucza publicznego z pliku\n";
+                        return 0;
+                    }
+                    else{
+                        pkey_present = true;
+                    }
+                    ifs.close();
+
+
+                }
+            else{
+                std::cerr<<"Błąd, potrzebny klucz publiczny!\n";
+                return 0;
+            }
+
+            //podpis
+
+            if(vm.count("signature")){
+                signature_c = cint(key);
+                signature_a = int_to_ar<ar512>(pk_c);
+                signature_present  =true;
+            }
+            else if(vm.count("signature_file"))
+
+                {
+                    //c_sk = import_cint_from_file(key_filename, success);
+                    ifs.open(signature_filename, std::ios_base::in | std::ios_base::binary);
+                    cflag = read_ar(signature_a,ifs);
+                    if(cflag !=0){
+                        std::cerr<<"Nie udało się oddtworzyć podpisu z pliku\n";
+                        return 0;
+                    }
+                    else{
+                        signature_present = true;
+                    }
+                    ifs.close();
+
+
+                }
+            else{
+                std::cerr<<"Błąd, potrzebny podpis!\n";
+                return 0;
+            }
+            //wiadomość
+            if(vm.count("msg")){
+                string_to_vec(msg_v, msg);
+                message_present = true;
+
+            }
+            else if(vm.count("msg_file")){
+
+                vectorize_binary_file(msg_filename, msg_v);
+                message_present = true;
+
+
+            }
+            else{
+                std::cerr<<"Błąd, potrzebna wiadomość!\n";
+                return 0;
+            }
+
+
+            //weryfikacja
+
+            if(message_present && pkey_present && signature_present){
+                //ar512 signature;
+                bool verdict;
+                //signature = sign_ed15519(sk_a,msg_v);
+
+                verdict = verify_ed12519(pk_a,msg_v,signature_a);
+                std::cout<<((verdict)?1:0)<<"\n";
+                /*if(!quiet) std::cout<<std::hex<<ar_to_int<ar512>(signature)<<"\n";
+                if(vm.count("signature_file")){
+                    ofs.open(signature_filename, std::ios_base::out | std::ios_base::binary);
+                    drop_ar(signature, ofs);
+                    ofs.close();
+                }*/
+
+
+            }
+
+
+
+
+        }
+        else {
+            show_help(all_options);
+            return 0;
         }
 
     }
-
-
-
-
-    /*Ed_point a(ed25519_params),b(ed25519_params),c;
-    Ed_point g(PX,PY);
-    cint tmp;
-    c= a+b;
-    c = a+g;
-
-    a = b = g;
-    for (int i=0; i<100010; i++)
-    {
-        g=g +c;
+    else{
+        show_help(all_options);
     }
 
-    cint m = 0xb;
-
-    //a = b = g;
-    a = Ed_point();
 
 
-    for(int i =0; i<m; ++i)
-    {
-        a = a +g;
-        //std::cout<<i+1""
-    }
-    b = g*m;
-
-    std::cout<<a.get_x()<<"\n"<<a.get_y()<<"\n\n";
-    std::cout<<b.get_x()<<"\n"<<b.get_y()<<"\n\n";
-
-    std::cout<<(a==b)<<"\n";
-    //std::cout<<a.get_x()<<"\n"<<a.get_y()<<"\n"<<c.get_x()<<"\n"<<c.get_y()<<"\n"<<b.get_x()<<"\n"<<b.get_y()<<"\n";
-
-    //std::cout <<std::hex<< p << "\n";
-
-    std::cout<<std::hex<<g.get_x()<<"\n";
-    ar512 ga;
-    ga = int_to_ar<ar512>(g.get_x());
-
-    for(size_t i=0; i<64; i++) std::cout<<std::hex<<std::setw(2)<<std::setfill('0')<<int(ga[i]);
-    std::cout<<"\n\n";
-    tmp = ar_to_int<ar512>(ga);
-    std::cout<<std::hex<<tmp<<"\n";
-
-    ar256 secret;
-    ar256 pk;
-    ar512 hsh;
-    bool success_flag;
-    clr(secret);
-    std::string  s = "Repent, for tomorow you die!";
-    for (size_t i=0; i<s.size(); ++i)
-    {
-        secret[i] = uint8_t(s[i]);
-    }
-    std::cout<<secret<<"\n";
-    hsh = expand_secret_ed25519(secret);
-    std::cout<<hsh<<"\n";
-
-    pk = calculate_pk_ed25519(secret, g);
-
-    test1();
-    test1_1();
-    //std::cout<<std::hex<<(cint(1)<<255)<<"\n";
-    //test2();
-    //std::string tt = "a\0n";
-
-    */
 
 
 

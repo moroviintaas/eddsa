@@ -59,8 +59,8 @@ bool Ed_point::operator==(const Ed_point &pnt) const
         std::cout<<"not same params\n";
         return false;
     }
-    else if (mod((X * pnt.Z) - (pnt.X * Z), params->modulus) != 0) {std::cout<<"x\n"; return false;}
-    else if (mod((Y * pnt.Z) - (pnt.Y * Z), params->modulus) != 0) {std::cout<<"y\n"; return false;}
+    else if (mod((X * pnt.Z) - (pnt.X * Z), params->modulus) != 0) {/*std::cout<<"x\n";*/ return false;}
+    else if (mod((Y * pnt.Z) - (pnt.Y * Z), params->modulus) != 0) {/*std::cout<<"y\n";*/ return false;}
     else return true;
 
 }
