@@ -186,6 +186,8 @@ int main(int argc, const char *argv[])
 
     if(vm.count("help")){
         show_help(all_options);
+        return  0;
+
     }
     if(vm.count("quiet")){
         quiet = true;
